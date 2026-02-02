@@ -924,8 +924,8 @@ public final class Mp4Extractor implements Extractor {
           nalPrefix.setPosition(0);
           int nalLengthInt = nalPrefix.readInt();
           if (nalLengthInt < 0) {
-            throw ParserException.createForMalformedContainer(
-                "Invalid NAL length", /* cause= */ null);
+            sampleCurrentNalBytesRemaining = 0;
+  return RESULT_CONTINUE;
           }
           sampleCurrentNalBytesRemaining =
               nalLengthInt - numberOfBytesToDetermineSampleDependencies;
