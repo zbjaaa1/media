@@ -30,4 +30,4 @@ jobs:
         with:
           name: media3-all-aars
           path: |
-            **/build/outputs/aar/*.aar
+            libraries/**/build/outputs/aar/*.aar
