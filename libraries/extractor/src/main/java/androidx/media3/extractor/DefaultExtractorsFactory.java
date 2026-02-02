@@ -518,6 +518,21 @@ public final class DefaultExtractorsFactory implements ExtractorsFactory {
                         : 0)));
         break;
       case FileTypes.MP4:
+        // Try TS extractor first for broken MP4 (e.g. Bilibili cache)
+        if (tsSubtitleFormats == null) {
+          tsSubtitleFormats = ImmutableList.of();
+        }
+        extractors.add(
+            new TsExtractor(
+                TsExtractor.MODE_SINGLE_PMT,
+                (textTrackTranscodingEnabled ? 0 : TsExtractor.FLAG_EMIT_RAW_SUBTITLE_DATA),
+                subtitleParserFactory,
+                new TimestampAdjuster(0),
+                new DefaultTsPayloadReaderFactory(
+                    tsFlags
+                        | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES,
+                    tsSubtitleFormats),
+                tsTimestampSearchBytes));
         extractors.add(
             new FragmentedMp4Extractor(
                 subtitleParserFactory,
