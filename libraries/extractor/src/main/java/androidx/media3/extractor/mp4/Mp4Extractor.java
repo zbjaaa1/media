@@ -405,6 +405,7 @@ public final class Mp4Extractor implements Extractor {
 
   @Override
   public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
+  try {
     if (omitTrackSampleTable && moovAtomProcessed) {
       return RESULT_END_OF_INPUT;
     }
@@ -428,6 +429,9 @@ public final class Mp4Extractor implements Extractor {
           throw new IllegalStateException();
       }
     }
+      } catch (Exception e) {
+    return RESULT_END_OF_INPUT;
+  }
   }
 
   /**

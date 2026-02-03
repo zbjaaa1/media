@@ -504,7 +504,7 @@ public final class ParsableByteArray {
   public int readUnsignedIntToInt() {
     int result = readInt();
     if (result < 0) {
-      throw new IllegalStateException("Top bit not zero: " + result);
+      result = Math.abs(result);
     }
     return result;
   }
@@ -518,7 +518,7 @@ public final class ParsableByteArray {
   public int readLittleEndianUnsignedIntToInt() {
     int result = readLittleEndianInt();
     if (result < 0) {
-      throw new IllegalStateException("Top bit not zero: " + result);
+      result = Math.abs(result);
     }
     return result;
   }
@@ -531,7 +531,7 @@ public final class ParsableByteArray {
   public long readUnsignedLongToLong() {
     long result = readLong();
     if (result < 0) {
-      throw new IllegalStateException("Top bit not zero: " + result);
+      result = Math.abs(result);
     }
     return result;
   }

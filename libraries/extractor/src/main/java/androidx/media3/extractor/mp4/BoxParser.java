@@ -447,6 +447,7 @@ public final class BoxParser {
       GaplessInfoHolder gaplessInfoHolder,
       boolean omitTrackSampleTable)
       throws ParserException {
+      try {
     SampleSizeBox sampleSizeBox;
     @Nullable LeafBox stszAtom = stblBox.getLeafBoxOfType(Mp4Box.TYPE_stsz);
     if (stszAtom != null) {
@@ -460,7 +461,13 @@ public final class BoxParser {
       sampleSizeBox = new Stz2SampleSizeBox(stz2Atom);
     }
 
-    int sampleCount = sampleSizeBox.getSampleCount();
+    int sampleCount;
+try {
+    sampleCount = sampleSizeBox.getSampleCount();
+} catch (Exception e) {
+    Log.w(TAG, "Invalid sampleCount, fallback empty table", e);
+    return buildEmptySampleTable(track);
+}
     if (sampleCount == 0) {
       return new TrackSampleTable(
           track,
@@ -501,7 +508,13 @@ public final class BoxParser {
     @Nullable ParsableByteArray ctts = cttsAtom != null ? cttsAtom.data : null;
 
     // Prepare to read chunk information.
-    ChunkIterator chunkIterator = new ChunkIterator(stsc, chunkOffsets, chunkOffsetsAreLongs);
+    ChunkIterator chunkIterator;
+try {
+    chunkIterator = new ChunkIterator(stsc, chunkOffsets, chunkOffsetsAreLongs);
+} catch (Exception e) {
+    Log.w(TAG, "ChunkIterator failed, fallback empty table", e);
+    return buildEmptySampleTable(track);
+}
 
     // Prepare to read sample timestamps.
     stts.setPosition(Mp4Box.FULL_HEADER_SIZE);
@@ -581,6 +594,7 @@ public final class BoxParser {
       int remainingSamplesInChunk = 0;
 
       for (int i = 0; i < sampleCount; i++) {
+      try {
         // Advance to the next chunk if necessary.
         boolean chunkDataComplete = true;
         while (remainingSamplesInChunk == 0 && (chunkDataComplete = chunkIterator.moveNext())) {
@@ -656,6 +670,11 @@ public final class BoxParser {
 
         offset += currentSampleSize;
         remainingSamplesInChunk--;
+        } catch (Exception e) {
+        Log.w(TAG, "Corrupt sample table at index " + i, e);
+        sampleCount = i; // 截断
+        break;
+    }
       }
       duration = timestampTimeUnits + timestampOffset;
 
@@ -975,6 +994,10 @@ public final class BoxParser {
         hasOnlySyncSamples,
         editedDurationUs,
         editedOffsets.length);
+        } catch (Exception e) {
+   Log.w(TAG, "parseStbl fatal fallback", e);
+   return buildEmptySampleTable(track);
+}
   }
 
   @Nullable
@@ -2716,6 +2739,21 @@ public final class BoxParser {
         && timestamps[earliestPaddingIndex] < editEndTime
         && editEndTime <= duration + EDIT_LIST_DURATION_TOLERANCE_TIMESCALE_UNITS;
   }
+  
+  private static TrackSampleTable buildEmptySampleTable(Track track) {
+    return new TrackSampleTable(
+        track,
+        new long[0],
+        new int[0],
+        0,
+        new long[0],
+        new int[0],
+        new int[0],
+        true,
+        0,
+        0
+    );
+}
 
   private BoxParser() {
     // Prevent instantiation.
