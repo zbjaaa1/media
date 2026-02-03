@@ -375,7 +375,7 @@ public class PlayerControlView extends FrameLayout {
 
   // LINT.IfChange(playback_speeds)
   private static final float[] PLAYBACK_SPEEDS =
-      new float[] {0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f};
+      new float[] {0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f};
   // LINT.ThenChange("../../../../res/values/strings.xml:playback_speeds")
 
   private static final int SETTINGS_PLAYBACK_SPEED_POSITION = 0;
@@ -1250,6 +1250,10 @@ public class PlayerControlView extends FrameLayout {
     controlViewLayoutManager.show();
   }
 
+  public void showProgress() {
+    controlViewLayoutManager.showProgress();
+  }
+
   /** Hides the controller. */
   public void hide() {
     controlViewLayoutManager.hide();
@@ -1473,7 +1477,7 @@ public class PlayerControlView extends FrameLayout {
         }
         Format trackFormat = trackGroup.getTrackFormat(trackIndex);
         if ((trackFormat.selectionFlags & C.SELECTION_FLAG_FORCED) != 0) {
-          continue;
+//          continue;
         }
         String trackName = trackNameProvider.getTrackName(trackFormat);
         trackInfos.add(new TrackInformation(tracks, trackGroupIndex, trackIndex, trackName));
@@ -1630,7 +1634,13 @@ public class PlayerControlView extends FrameLayout {
     int width = Math.min(itemWidth, maxWidth);
     settingsWindow.setWidth(width);
 
-    int maxHeight = getHeight() - settingsWindowMargin * 2;
+    View centerView = findViewById(R.id.exo_controls_background);
+    int topBar = 0;
+    if (centerView instanceof ViewGroup && ((ViewGroup) centerView).getChildCount() > 0)
+      topBar = ((ViewGroup) centerView).getChildAt(0).getBottom();
+    int[] bottomBarLocation = new int[2];
+    findViewById(R.id.exo_bottom_bar).getLocationOnScreen(bottomBarLocation);
+    int maxHeight = bottomBarLocation[1] - topBar - settingsWindowMargin;
     int totalHeight = settingsView.getMeasuredHeight();
     int height = Math.min(maxHeight, totalHeight);
     settingsWindow.setHeight(height);
@@ -1646,9 +1656,9 @@ public class PlayerControlView extends FrameLayout {
     needToHideBars = true;
 
     int xoff = getWidth() - settingsWindow.getWidth() - settingsWindowMargin;
-    int yoff = -settingsWindow.getHeight() - settingsWindowMargin;
+    int yoff = - settingsWindowMargin / 2;
 
-    settingsWindow.showAsDropDown(anchorView, xoff, yoff);
+    settingsWindow.showAsDropDown(findViewById(R.id.exo_bottom_bar), xoff, yoff);
   }
 
   private void setPlaybackSpeed(float speed) {
@@ -1852,8 +1862,8 @@ public class PlayerControlView extends FrameLayout {
     if ((width != oldWidth || height != oldHeight) && settingsWindow.isShowing()) {
       updateSettingsWindowSize();
       int xOffset = getWidth() - settingsWindow.getWidth() - settingsWindowMargin;
-      int yOffset = -settingsWindow.getHeight() - settingsWindowMargin;
-      settingsWindow.update(v, xOffset, yOffset, -1, -1);
+      int yOffset = - settingsWindowMargin / 2;
+      settingsWindow.update(findViewById(R.id.exo_bottom_bar), xOffset, yOffset, -1, -1);
     }
   }
 
@@ -2344,10 +2354,7 @@ public class PlayerControlView extends FrameLayout {
               player.setTrackSelectionParameters(
                   trackSelectionParameters
                       .buildUpon()
-                      .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-                      .setIgnoredTextSelectionFlags(~C.SELECTION_FLAG_FORCED)
-                      .setPreferredTextLanguage(null)
-                      .setPreferredTextRoleFlags(0)
+                      .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, /* disabled= */ true)
                       .build());
               settingsWindow.dismiss();
             }
